@@ -1,5 +1,10 @@
-from fastapi import APIRouter, Path
-from data_loader import load_data   # import preloaded data
+from fastapi import APIRouter, Path, Depends, HTTPException
+from sqlalchemy.orm import Session
+from DB import get_db
+from models.models import Student
+
+from schemas import StudentSchema        # ✅ import schema
+from typing import List
 
 router = APIRouter()
 
@@ -11,20 +16,20 @@ def home():
 def about():
     return {"message": "Fetch data from CSV"}
 
-@router.get("/view")
-def view():
-    data=load_data()
-    return data.to_dict(orient="records")
+# ✅ Fetch all students from DB
+@router.get("/view", response_model=List[StudentSchema])
+def view(db:Session=Depends(get_db)):
+    students=db.query(Student).all()
+    return students
 
 
-@router.get("/student-details/{student_id}")
-def get_student(student_id: str):
+@router.get("/student-details/{student_id}", response_model=StudentSchema)
+def get_student(student_id: str, db:Session=Depends(get_db)):
 
-    data = load_data()   # DataFrame
+    student=db.query(Student).filter(Student.student_id==student_id).first()  # DataFrame
 
-    student = data[data["student_id"] == student_id]
 
-    if student.empty:
-        return {"message": "Student not found"}
+    if not student:
+        raise HTTPException(status_code=404, detail="Student not found")
 
-    return student.to_dict(orient="records")
+    return student

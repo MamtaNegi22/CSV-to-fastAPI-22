@@ -1,11 +1,9 @@
 from fastapi import FastAPI
 from routes import router
 from data_loader import load_data
-
-import models
-
+from models.models import *
 from sqlalchemy.orm import session
-from DB import engine, SessionLocal, Base
+from DB import engine, Base
 
 app = FastAPI()
 
