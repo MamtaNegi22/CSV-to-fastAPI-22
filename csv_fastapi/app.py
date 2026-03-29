@@ -1,26 +1,19 @@
 from fastapi import FastAPI
-import pandas as pd
+from routes import router
+from data_loader import load_data
 
-app=FastAPI()
+import models
 
-# -----------data_load------------------
+from sqlalchemy.orm import session
+from DB import engine, SessionLocal, Base
 
-def load_data():
-    with open("students_complete.csv","r") as f:
-        data=pd.read_csv(f)
-    return data
+app = FastAPI()
 
-@app.get("/")
-def home():
-    return "Welcome to the FastAPI...we will fetch the data from CSV FILE"
+# create tables
+Base.metadata.create_all(bind=engine)
 
-@app.get("/about")
-def about():
-    return "here you will get the data from the csv file"
+@app.on_event("startup")
+def startup_event():
+    load_data()   # load once
 
-@app.get("/view")
-def view():
-    data=load_data()
-    return data.to_json(orient="records")
-# to_dict se nhi hoga - Pandas converts structure → but NOT always datatypes
-# to_json will work - Pandas converts everything into a JSON string
+app.include_router(router)
